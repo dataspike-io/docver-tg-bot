@@ -49,9 +49,9 @@ type ITelegramBot interface {
 	CheckLiveness(ctx context.Context, applicantId string, status string) error
 }
 
-type Option func(bot *telegramBot)
+type Option func(bot *TelegramBot)
 
-type telegramBot struct {
+type TelegramBot struct {
 	bot        *tgbotapi.BotAPI
 	dsClient   dataspike.IDataspikeClient
 	gptClient  *chatgpt.Client
@@ -61,7 +61,7 @@ type telegramBot struct {
 	prompt     string
 }
 
-func (t *telegramBot) Start(ctx context.Context, offset, timeout int) {
+func (t *TelegramBot) Start(ctx context.Context, offset, timeout int) {
 	u := tgbotapi.NewUpdate(offset)
 	u.Timeout = timeout
 
@@ -112,7 +112,7 @@ func (t *telegramBot) Start(ctx context.Context, offset, timeout int) {
 	}
 }
 
-func (t *telegramBot) ParseCallback(ctx context.Context, callbackQuery *tgbotapi.CallbackQuery) error {
+func (t *TelegramBot) ParseCallback(ctx context.Context, callbackQuery *tgbotapi.CallbackQuery) error {
 	switch callbackQuery.Data {
 	case learnMrz:
 		_, err := t.bot.Send(tgbotapi.NewMessage(callbackQuery.From.ID, mzrText))
@@ -141,7 +141,7 @@ func (t *telegramBot) ParseCallback(ctx context.Context, callbackQuery *tgbotapi
 	}
 }
 
-func (t *telegramBot) ParseCommand(ctx context.Context, message *tgbotapi.Message) error {
+func (t *TelegramBot) ParseCommand(ctx context.Context, message *tgbotapi.Message) error {
 	msg := tgbotapi.NewMessage(message.From.ID, "")
 	switch message.Command() {
 	case "start":
@@ -220,7 +220,7 @@ func (t *telegramBot) ParseCommand(ctx context.Context, message *tgbotapi.Messag
 	return err
 }
 
-func (t *telegramBot) createVerificationCommand(ctx context.Context, message *tgbotapi.Message) error {
+func (t *TelegramBot) createVerificationCommand(ctx context.Context, message *tgbotapi.Message) error {
 	if !t.dev {
 		_, err := t.bot.Send(tgbotapi.NewMessage(message.From.ID, "Oops, that command is new to me!"))
 		return err
@@ -267,7 +267,7 @@ func (t *telegramBot) createVerificationCommand(ctx context.Context, message *tg
 	return t.nextCheck(message.From.ID, verification)
 }
 
-func (t *telegramBot) startVerificationCommand(ctx context.Context, message *tgbotapi.Message) error {
+func (t *TelegramBot) startVerificationCommand(ctx context.Context, message *tgbotapi.Message) error {
 	if message.From.IsBot {
 		_, err := t.bot.Send(tgbotapi.NewMessage(message.From.ID, verificationForBotIsDisabled))
 		return err
@@ -297,7 +297,7 @@ func (t *telegramBot) startVerificationCommand(ctx context.Context, message *tgb
 	return t.nextCheck(message.From.ID, verification)
 }
 
-func (t *telegramBot) ParseText(ctx context.Context, message *tgbotapi.Message) error {
+func (t *TelegramBot) ParseText(ctx context.Context, message *tgbotapi.Message) error {
 	if t.gptClient == nil {
 		msg := tgbotapi.NewMessage(message.From.ID, helpText)
 		msg.ParseMode = tgbotapi.ModeHTML
@@ -325,7 +325,7 @@ func (t *telegramBot) ParseText(ctx context.Context, message *tgbotapi.Message) 
 	return err
 }
 
-func (t *telegramBot) getLink(message *tgbotapi.Message) (string, string, error) {
+func (t *TelegramBot) getLink(message *tgbotapi.Message) (string, string, error) {
 	switch {
 	case message.Document != nil:
 		doc, err := t.bot.GetFile(tgbotapi.FileConfig{FileID: message.Document.FileID})
@@ -356,7 +356,7 @@ func (t *telegramBot) getLink(message *tgbotapi.Message) (string, string, error)
 	return "", "", errors.New("file not found")
 }
 
-func (t *telegramBot) ParseDocument(ctx context.Context, message *tgbotapi.Message) error {
+func (t *TelegramBot) ParseDocument(ctx context.Context, message *tgbotapi.Message) error {
 	tgID := strconv.FormatInt(message.From.ID, 10)
 	verification, err := t.cache.GetVerification(ctx, tgID)
 	if err != nil {
@@ -396,7 +396,7 @@ func (t *telegramBot) ParseDocument(ctx context.Context, message *tgbotapi.Messa
 	}
 }
 
-func (t *telegramBot) uploadDocument(ctx context.Context, tgID int64, docType, filename string, verification *dataspike.Verification, file io.Reader) error {
+func (t *TelegramBot) uploadDocument(ctx context.Context, tgID int64, docType, filename string, verification *dataspike.Verification, file io.Reader) error {
 	respDoc, err := t.dsClient.UploadDocument(&dataspike.DocumentUpload{
 		DocType:     docType,
 		FileName:    filename,
@@ -426,7 +426,7 @@ func (t *telegramBot) uploadDocument(ctx context.Context, tgID int64, docType, f
 	return t.nextCheck(tgID, verification)
 }
 
-func (t *telegramBot) nextCheck(chatID int64, verification *dataspike.Verification) error {
+func (t *TelegramBot) nextCheck(chatID int64, verification *dataspike.Verification) error {
 	msg := tgbotapi.NewMessage(chatID, "")
 	switch {
 	case verification.Checks.DocumentMrz != nil && verification.Checks.DocumentMrz.Status == pending:
@@ -464,7 +464,7 @@ func (t *telegramBot) nextCheck(chatID int64, verification *dataspike.Verificati
 	return err
 }
 
-func (t *telegramBot) SendVerificationStatus(ctx context.Context, applicantID, status string) error {
+func (t *TelegramBot) SendVerificationStatus(ctx context.Context, applicantID, status string) error {
 	applicant, err := t.dsClient.GetApplicantByID(uuid.FromStringOrNil(applicantID))
 	if err != nil {
 		// TODO: logging
@@ -511,7 +511,7 @@ func (t *telegramBot) SendVerificationStatus(ctx context.Context, applicantID, s
 	return nil
 }
 
-func (t *telegramBot) CheckLiveness(ctx context.Context, applicantId, status string) error {
+func (t *TelegramBot) CheckLiveness(ctx context.Context, applicantId, status string) error {
 	applicant, err := t.dsClient.GetApplicantByID(uuid.FromStringOrNil(applicantId))
 	if err != nil {
 		// TODO: logging
@@ -557,7 +557,7 @@ func (t *telegramBot) CheckLiveness(ctx context.Context, applicantId, status str
 // WithBuffer is a Option that allows you set size of bot buffer.
 // Default value is 100
 func WithBuffer(buffer int) Option {
-	return func(t *telegramBot) {
+	return func(t *TelegramBot) {
 		t.bot.Buffer = buffer
 	}
 }
@@ -565,7 +565,7 @@ func WithBuffer(buffer int) Option {
 // WithGPT is a Option that allows you using chatgpt client for answer to text messages.
 // When this option is nil, bot will answer default message.
 func WithGPT(client *chatgpt.Client, prompt string) Option {
-	return func(t *telegramBot) {
+	return func(t *TelegramBot) {
 		t.gptClient = client
 		if prompt != "" {
 			t.prompt = prompt
@@ -575,7 +575,7 @@ func WithGPT(client *chatgpt.Client, prompt string) Option {
 
 // WithSandbox is a Option add create_verification command.
 func WithSandbox() Option {
-	return func(t *telegramBot) {
+	return func(t *TelegramBot) {
 		t.dev = true
 		menu.Commands = append(menu.Commands, tgbotapi.BotCommand{
 			Command:     "/create_verification",
@@ -586,7 +586,7 @@ func WithSandbox() Option {
 
 // WithHTTPClient is a Option that allows you set http client.
 func WithHTTPClient(client IHTTPClient) Option {
-	return func(t *telegramBot) {
+	return func(t *TelegramBot) {
 		t.httpClient = client
 	}
 }
@@ -598,7 +598,7 @@ func NewTelegramBot(telegramToken string, dsClient dataspike.IDataspikeClient, c
 	}
 	bot.Buffer = buffer
 
-	dsTgBot := &telegramBot{
+	dsTgBot := &TelegramBot{
 		bot:        bot,
 		dsClient:   dsClient,
 		cache:      cache,

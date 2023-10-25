@@ -52,7 +52,7 @@ func TestNewTelegramBot(t *testing.T) {
 				t.Errorf("error creating bot: %s", err)
 			}
 
-			tBot := &telegramBot{
+			tBot := &TelegramBot{
 				bot: bot,
 			}
 			for _, opt := range tt.args.options {
@@ -87,7 +87,7 @@ func Test_telegramBot_CheckLiveness(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot:      bot,
 		dsClient: dsMock,
 		cache:    cacheMock,
@@ -194,7 +194,7 @@ func Test_telegramBot_SendVerificationStatus(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot:      bot,
 		dsClient: dsMock,
 		cache:    cacheMock,
@@ -310,7 +310,7 @@ func Test_telegramBot_Start(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot:        bot,
 		dsClient:   dsMock,
 		cache:      cacheMock,
@@ -356,7 +356,7 @@ func Test_telegramBot_callbackParse(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot:      bot,
 		dsClient: dsMock,
 		cache:    cacheMock,
@@ -445,7 +445,7 @@ func Test_telegramBot_commandParse(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot:      bot,
 		dsClient: dsMock,
 		cache:    cacheMock,
@@ -758,7 +758,7 @@ func Test_telegramBot_getLink(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot: bot,
 	}
 	type args struct {
@@ -845,7 +845,7 @@ func Test_telegramBot_nextCheck(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot:      bot,
 		dsClient: dsMock,
 		cache:    cacheMock,
@@ -942,7 +942,7 @@ func Test_telegramBot_parseDocument(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot:        bot,
 		dsClient:   dsMock,
 		cache:      cacheMock,
@@ -1201,7 +1201,7 @@ func Test_telegramBot_textParse(t *testing.T) {
 		t.Errorf("error creating bot: %s", err)
 	}
 
-	tBot := &telegramBot{
+	tBot := &TelegramBot{
 		bot:      bot,
 		dsClient: dsMock,
 		cache:    cacheMock,
