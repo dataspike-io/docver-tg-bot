@@ -27,24 +27,12 @@ type ICache interface {
 	RemoveVerification(context.Context, string) error
 }
 
-type IDataspikeClient interface {
-	GetVerificationByID(uuid.UUID) (*dataspike.Verification, error)
-	GetVerificationByShortID(string) (*dataspike.Verification, error)
-	GetApplicantByID(uuid.UUID) (*dataspike.Applicant, error)
-	LinkTelegramProfile(string, string) error
-	UploadDocument(*dataspike.DocumentUpload) (*dataspike.Document, error)
-	CancelVerification(uuid.UUID) error
-	ProceedVerification(string) error
-	GetApplicantByExternalID(string) (*dataspike.Applicant, error)
-	CreateApplicant(*dataspike.ApplicantCreate) (string, error)
-	CreateVerification(*dataspike.VerificationCreate) (*dataspike.Verification, error)
-	CreateWebhook(*dataspike.WebhookCreate) error
-	ListWebhooks() (*dataspike.WebhookResponse, error)
-	DeleteWebhook(uuid.UUID) error
-}
-
 type ITelegramBot interface {
 	Start(ctx context.Context, offset int, timeout int)
+	ParseCallback(ctx context.Context, callbackQuery *tgbotapi.CallbackQuery) error
+	ParseCommand(ctx context.Context, message *tgbotapi.Message) error
+	ParseDocument(ctx context.Context, message *tgbotapi.Message) error
+	ParseText(ctx context.Context, message *tgbotapi.Message) error
 	SendVerificationStatus(ctx context.Context, applicantID string, status string) error
 	CheckLiveness(ctx context.Context, applicantId string, status string) error
 }
@@ -591,13 +579,7 @@ func WithHTTPClient(client IHTTPClient) Option {
 	}
 }
 
-func NewTelegramBot(telegramToken string, dsClient dataspike.IDataspikeClient, cache ICache, options ...Option) (ITelegramBot, error) {
-	bot, err := tgbotapi.NewBotAPI(telegramToken)
-	if err != nil {
-		return nil, err
-	}
-	bot.Buffer = buffer
-
+func NewTelegramBot(bot *tgbotapi.BotAPI, dsClient dataspike.IDataspikeClient, cache ICache, options ...Option) (ITelegramBot, error) {
 	dsTgBot := &TelegramBot{
 		bot:        bot,
 		dsClient:   dsClient,
@@ -612,7 +594,7 @@ and all other requests should be politely rejected as not fitting your work resp
 		o(dsTgBot)
 	}
 
-	_, err = bot.Request(menu)
+	_, err := bot.Request(menu)
 	if err != nil {
 		return nil, err
 	}

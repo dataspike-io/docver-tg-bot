@@ -24,6 +24,11 @@ func TestNewTelegramBot(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	httpMock := mock_telegram_bot.NewMockIHTTPClient(ctrl)
 
+	bot, err := newBot(httpMock)
+	if err != nil {
+		t.Errorf("error creating bot: %s", err)
+	}
+
 	type args struct {
 		telegramToken string
 		dsClient      dataspike.IDataspikeClient
@@ -33,31 +38,32 @@ func TestNewTelegramBot(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
+		f    func()
 		err  error
 	}{
 		{
 			name: "success",
 			args: args{telegramToken: "123", options: []Option{WithBuffer(1), WithGPT(nil, "123"), WithSandbox(), WithHTTPClient(httpMock)}},
-			err:  &tgbotapi.Error{Code: 404, Message: "Not Found", ResponseParameters: tgbotapi.ResponseParameters{}},
+			f: func() {
+				httpMock.EXPECT().Do(gomock.Any()).Return(&http.Response{Body: io.NopCloser(bytes.NewReader([]byte(`{"ok":true,"result":{}}`)))}, nil)
+			},
+			err: nil, //&tgbotapi.Error{Code: 404, Message: "Not Found", ResponseParameters: tgbotapi.ResponseParameters{}},
+		},
+		{
+			name: "success",
+			args: args{telegramToken: "123", options: []Option{WithBuffer(1), WithGPT(nil, "123"), WithSandbox(), WithHTTPClient(httpMock)}},
+			f: func() {
+				httpMock.EXPECT().Do(gomock.Any()).Return(nil, errors.New("request failed"))
+			},
+			err: errors.New("request failed"),
 		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewTelegramBot(tt.args.telegramToken, tt.args.dsClient, tt.args.cache, tt.args.options...)
+			tt.f()
+			_, err = NewTelegramBot(bot, tt.args.dsClient, tt.args.cache, tt.args.options...)
 			assert.Equal(t, tt.err, err)
-
-			bot, err := newBot(httpMock)
-			if err != nil {
-				t.Errorf("error creating bot: %s", err)
-			}
-
-			tBot := &TelegramBot{
-				bot: bot,
-			}
-			for _, opt := range tt.args.options {
-				opt(tBot)
-			}
 		})
 	}
 }
