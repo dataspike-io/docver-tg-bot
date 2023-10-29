@@ -48,8 +48,6 @@ const (
 	verified = "verified"
 
 	mrzLink = "https://static.dataspike.io/images/docver/mrz_sample.jpg"
-
-	buffer = 100
 )
 
 var defaultProfile = "1ee20e99-35f7-6c75-811b-6df0f88c424d"

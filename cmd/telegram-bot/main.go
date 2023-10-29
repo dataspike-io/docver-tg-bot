@@ -7,6 +7,7 @@ import (
 	"github.com/dataspike-io/docver-tg-bot/internal/cache"
 	"github.com/dataspike-io/docver-tg-bot/internal/handlers"
 	"github.com/dataspike-io/docver-tg-bot/pkg/telegram_bot"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"net/http"
 	"os"
@@ -32,13 +33,18 @@ func main() {
 		log.Fatalf("failed to create webhook: %s", err)
 	}
 
-	bot, err := telegram_bot.NewTelegramBot(cfg.TelegramToken.RawString(), dataspikeClient, memoryCache)
+	bot, err := tgbotapi.NewBotAPI(cfg.TelegramToken.RawString())
 	if err != nil {
-		log.Fatalf("failed to create telegram bot: %s", err)
+		log.Fatalf("failed to create BotAPI: %s", err)
 	}
-	go bot.Start(ctx, cfg.telegramOffset, cfg.telegramTimeout)
 
-	handler := handlers.NewTgBotHandler(bot)
+	dsBot, err := telegram_bot.NewTelegramBot(bot, dataspikeClient, memoryCache)
+	if err != nil {
+		log.Fatalf("failed to create telegram dsBot: %s", err)
+	}
+	go dsBot.Start(ctx, cfg.telegramOffset, cfg.telegramTimeout)
+
+	handler := handlers.NewTgBotHandler(dsBot)
 	mux := http.NewServeMux()
 	mux.Handle(cfg.webhookPath, handler)
 
