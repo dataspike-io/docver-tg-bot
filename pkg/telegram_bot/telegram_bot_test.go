@@ -477,10 +477,12 @@ func Test_telegramBot_commandParse(t *testing.T) {
 			name: "start",
 			args: args{&tgbotapi.Message{Entities: []tgbotapi.MessageEntity{{Length: 6, Type: "bot_command"}}, Text: "/start=test", From: &tgbotapi.User{ID: 123}}},
 			f: func() {
-				dsMock.EXPECT().GetVerificationByShortID(gomock.Eq("test")).Return(&dataspike.Verification{}, nil)
+				dsMock.EXPECT().GetVerificationByShortID(gomock.Eq("test")).Return(&dataspike.Verification{Checks: dataspike.Checks{FaceComparison: &dataspike.Check{Status: pending}}}, nil)
 				dsMock.EXPECT().GetApplicantByID(gomock.Any()).Return(&dataspike.Applicant{ApplicantId: "test"}, nil)
 				dsMock.EXPECT().LinkTelegramProfile(gomock.Eq("test"), gomock.Any()).Return(nil)
 				cacheMock.EXPECT().SetVerification(gomock.Any(), gomock.Eq("123"), gomock.Any()).Return(nil)
+				httpMock.EXPECT().Do(gomock.Any()).Return(&http.Response{Body: io.NopCloser(bytes.NewReader([]byte(`{"ok":true,"result":{}}`)))}, nil)
+				httpMock.EXPECT().Do(gomock.Any()).Return(&http.Response{Body: io.NopCloser(bytes.NewReader([]byte(`{"ok":true,"result":{}}`)))}, nil)
 				httpMock.EXPECT().Do(gomock.Any()).Return(&http.Response{Body: io.NopCloser(bytes.NewReader([]byte(`{"ok":true,"result":{}}`)))}, nil)
 			},
 			err: nil,

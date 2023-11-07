@@ -133,21 +133,31 @@ func (t *TelegramBot) ParseCommand(ctx context.Context, message *tgbotapi.Messag
 	msg := tgbotapi.NewMessage(message.From.ID, "")
 	switch message.Command() {
 	case "start":
-		msg.Text = startText
+		if message.From.IsBot {
+			_, err := t.bot.Send(tgbotapi.NewMessage(message.From.ID, verificationForBotIsDisabled))
+			return err
+		}
+
 		arg := message.CommandArguments()
 		if arg == "" {
 			_, err := t.bot.Send(msg)
 			return err
 		}
+
 		verification, err := t.dsClient.GetVerificationByShortID(arg)
 		if err != nil {
 			return err
 		}
-		if verification.Status == "expired" {
+
+		switch verification.Status {
+		case "expired":
 			msg.Text = expiredText
 			msg.ParseMode = tgbotapi.ModeHTML
 			msg.ReplyMarkup = contactUsKeyboard
 			_, err = t.bot.Send(msg)
+			return err
+		case verified:
+			_, err = t.bot.Send(tgbotapi.NewMessage(message.From.ID, verificationCompleted))
 			return err
 		}
 
@@ -167,7 +177,16 @@ func (t *TelegramBot) ParseCommand(ctx context.Context, message *tgbotapi.Messag
 			return err
 		}
 
-		msg.ReplyMarkup = contactUsKeyboard
+		_, err = t.bot.Send(tgbotapi.NewMessage(message.From.ID, startText))
+		if err != nil {
+			return err
+		}
+		_, err = t.bot.Send(tgbotapi.NewMessage(message.From.ID, startVerificationInit))
+		if err != nil {
+			return err
+		}
+
+		return t.nextCheck(message.From.ID, verification)
 	case "help":
 		msg.Text = helpText
 		msg.ParseMode = tgbotapi.ModeHTML
