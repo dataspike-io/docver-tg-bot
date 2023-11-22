@@ -478,6 +478,18 @@ func (t *TelegramBot) SendVerificationStatus(ctx context.Context, applicantID, s
 		return err
 	}
 
+	v, err := t.cache.GetVerification(ctx, applicant.TgProfile)
+	if err != nil {
+		// TODO: logging
+		return err
+	}
+	v.Status = status
+	err = t.cache.SetVerification(ctx, applicant.TgProfile, v)
+	if err != nil {
+		// TODO: logging
+		return err
+	}
+
 	tgID, err := strconv.ParseInt(applicant.TgProfile, 10, 64)
 	if err != nil {
 		// TODO: logging
@@ -498,24 +510,7 @@ func (t *TelegramBot) SendVerificationStatus(ctx context.Context, applicantID, s
 	}
 
 	_, err = t.bot.Send(tgbotapi.NewMessage(tgID, VerificationOk))
-	if err != nil {
-		// TODO: logging
-		return err
-	}
-
-	v, err := t.cache.GetVerification(ctx, applicant.TgProfile)
-	if err != nil {
-		// TODO: logging
-		return err
-	}
-	v.Status = status
-	err = t.cache.SetVerification(ctx, applicant.TgProfile, v)
-	if err != nil {
-		// TODO: logging
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (t *TelegramBot) CheckLiveness(ctx context.Context, applicantId, status string) error {
