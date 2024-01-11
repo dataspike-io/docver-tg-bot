@@ -24,8 +24,8 @@ You can choose from a utility bill, residence registration or bank statement.`
 Please attach a selfie so we can confirm your identity.`
 	LivenessPrompt = `To verify your identity, we need to see a photo of you.
 Please click button below to open liveness widget.`
-	VerificationStartedPleaseWait = `We are now processing your verification. This may take a few minutes.
-You will receive a notification as soon as the process is complete.`
+	VerificationStartedPleaseWait = `Thank you!
+You have successfully uploaded all required documents`
 	AttachBackSideOfDoc = "Please attach <b>the back side</b> of your document so we can verify its authenticity."
 	SelectedPoaDocument = "Please attach poa document."
 	VerificationOk      = "Congratulations! Your identity has been verified."
